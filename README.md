@@ -17,7 +17,10 @@ Este proyecto implementa un sistema completo de reconocimiento facial que:
 - **ONNX Runtime** - Inferencia de modelos
 - **NumPy** - Operaciones numéricas
 - **YOLO Face Detection** - Detección de rostros
+ https://huggingface.co/deepghs/yolo-face/blob/1eb85df806aed8a6789c88dcf7194005aaed6fe2/yolov8n-face/model.onnx
 - **ArcFace R100** - Extracción de embeddings faciales
+wget https://huggingface.co/garavv/arcface-onnx/resolve/main/arc.onnx?download=true -O arcface.onnx
+
 
 ## 📁 Estructura del Proyecto
 
@@ -216,7 +219,7 @@ Este proyecto es de código abierto y está disponible bajo la licencia MIT.
 
 ## 👤 Autor
 
-Daniel - Proyecto de Reconocimiento Facial
+Daniela Moreno - Proyecto de Reconocimiento Facial
 
 ## 🙏 Agradecimientos
 
