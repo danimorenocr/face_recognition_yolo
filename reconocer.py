@@ -174,18 +174,25 @@ while True:
 
         mejor_usuario = "DESCONOCIDO"
         mejor_distancia = 1e9
+        tiene_acceso = False
 
-        for usuario, emb_base in base_usuarios.items():
+        for usuario, datos in base_usuarios.items():
+            emb_base = datos['embedding']
             dist = distancia_coseno(embedding_live, emb_base)
             if dist < mejor_distancia:
                 mejor_distancia = dist
                 mejor_usuario = usuario
+                tiene_acceso = datos['access']
 
         # ------ REGLA DE ACCESO ------
         if mejor_distancia < 0.55:
             label = f"{mejor_usuario} ({mejor_distancia:.3f})"
-            color = (0, 255, 0)
-            access = "ACCESO PERMITIDO"
+            if tiene_acceso:
+                color = (0, 255, 0)
+                access = "ACCESO PERMITIDO"
+            else:
+                color = (0, 165, 255)  # Naranja
+                access = "ACCESO DENEGADO"
         else:
             label = f"DESCONOCIDO ({mejor_distancia:.3f})"
             color = (0, 0, 255)

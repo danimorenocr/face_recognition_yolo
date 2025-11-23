@@ -3,10 +3,13 @@ import numpy as np
 import onnxruntime as ort
 import os
 from utils import preprocess_arcface
+from core.database import SessionLocal
+from services.face_recognizer import guardar_usuario
 
 # Rutas de los modelos
-YOLO_MODEL = "modelo_det_face/model.onnx"
-ARC_MODEL  = "modelo_arcface/arcface_r100.onnx"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+YOLO_MODEL = os.path.join(BASE_DIR, "models", "model.onnx")
+ARC_MODEL  = os.path.join(BASE_DIR, "models", "arcface_r100.onnx")
 
 # Cargar YOLO FACE (tu modelo)
 session_yolo = ort.InferenceSession(YOLO_MODEL, providers=["CPUExecutionProvider"])
