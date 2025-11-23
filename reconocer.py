@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import onnxruntime as ort
 import os
 from utils import preprocess_arcface
 from session_options import get_optimized_session
@@ -17,7 +18,6 @@ input_name_yolo = session_yolo.get_inputs()[0].name
 session_arc = get_optimized_session(ARC_MODEL)
 input_name_arc = session_arc.get_inputs()[0].name
 
-
 # ==========================
 #  CARGAR BASE DE USUARIOS
 # ==========================
@@ -33,16 +33,10 @@ def cargar_base():
 base_usuarios = cargar_base()
 print(f"✔ Usuarios cargados: {list(base_usuarios.keys())}")
 
-
-# ==========================
-#  DISTANCIA COSENO
-# ==========================
-
 def distancia_coseno(a, b):
     dot = np.dot(a, b)
     norms = np.linalg.norm(a) * np.linalg.norm(b)
     return 1 - (dot / norms)
-
 
 # ==========================
 #   DETECTAR CÁMARA
@@ -63,20 +57,19 @@ def abrir_camara():
 cap = abrir_camara()
 print("🎥 Iniciando reconocimiento...")
 
-
 # ==========================
-#  VARIABLES PARA ANTI-PARPADEO
+#  CONTROL DE PARPADEO
 # ==========================
 
 last_box = None
+last_label = None
+last_color = (0, 255, 0)
+last_access = None  # PERMITIDO / DENEGADO
+
 frames_sin_det = 0
 MAX_FRAMES_SIN_DET = 6
 
-last_label = None
-last_color = (0, 255, 0)
-
 frame_count = 0
-
 
 # ==========================
 #   LOOP PRINCIPAL
@@ -89,19 +82,19 @@ while True:
 
     H, W = frame.shape[:2]
 
-    # ⚡ Procesamos YOLO solo cada 2 frames
+    # ⚡ SOLO INFERIR YOLO CADA 2 FRAMES
     frame_count += 1
-    procesar = (frame_count % 2 == 0)
-
-    # ==============================
-    #   SI NO PROCESAMOS YOLO HOY
-    # ==============================
-    if not procesar:
+    if frame_count % 2 != 0:
         if last_box is not None and last_label is not None:
             x1, y1, x2, y2 = last_box
             cv2.rectangle(frame, (x1, y1), (x2, y2), last_color, 2)
             cv2.putText(frame, last_label, (x1, y1 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, last_color, 2)
+
+            # Mostrar estado de acceso
+            if last_access is not None:
+                cv2.putText(frame, last_access, (20, 50),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1.2, last_color, 3)
 
         cv2.imshow("Reconocimiento Facial", frame)
         if cv2.waitKey(1) == 27:
@@ -109,7 +102,7 @@ while True:
         continue
 
     # ==========================
-    #      PREPROCESO YOLO
+    #       PREPROCESO YOLO
     # ==========================
 
     resized = cv2.resize(frame, (640, 640))
@@ -118,8 +111,8 @@ while True:
     img = np.moveaxis(img, -1, 0)
     img = img[np.newaxis, :, :, :]
 
-    out = session_yolo.run(None, {input_name_yolo: img})[0]  # (1,5,8400)
-    out = out.squeeze()  # (5,8400)
+    out = session_yolo.run(None, {input_name_yolo: img})[0]
+    out = out.squeeze()
 
     xs, ys, ws, hs, confs = out
 
@@ -129,34 +122,29 @@ while True:
     best_conf = 0
     best_box = None
 
-    # ==========================
-    #      DETECCIÓN
-    # ==========================
-
     for i in range(8400):
         conf = confs[i]
         if conf > best_conf and conf > 0.55:
-
             cx = xs[i] * scale_x
             cy = ys[i] * scale_y
             w_box = ws[i] * scale_x
             h_box = hs[i] * scale_y
 
-            x1 = int(cx - w_box / 2)
-            y1 = int(cy - h_box / 2)
-            x2 = int(cx + w_box / 2)
-            y2 = int(cy + h_box / 2)
+            x1 = int(cx - w_box/2)
+            y1 = int(cy - h_box/2)
+            x2 = int(cx + w_box/2)
+            y2 = int(cy + h_box/2)
 
             if w_box < 50 or h_box < 50:
                 continue
             if x1 < 0 or y1 < 0 or x2 > W or y2 > H:
                 continue
 
-            best_conf = conf
             best_box = (x1, y1, x2, y2)
+            best_conf = conf
 
     # ==========================
-    #   ANTI-PARPADEO COMPLETO
+    #      ANTI-PARPADEO
     # ==========================
 
     if best_box is not None:
@@ -169,11 +157,11 @@ while True:
         else:
             best_box = None
             last_box = None
-            last_label = None  # también borrar label
-            last_color = (0, 255, 0)
+            last_label = None
+            last_access = None
 
     # ==========================
-    #   RECONOCIMIENTO FACIAL
+    #         RECONOCER
     # ==========================
 
     if best_box is not None:
@@ -193,22 +181,34 @@ while True:
                 mejor_distancia = dist
                 mejor_usuario = usuario
 
-        # ----- DECISIÓN -----
+        # ------ REGLA DE ACCESO ------
         if mejor_distancia < 0.55:
             label = f"{mejor_usuario} ({mejor_distancia:.3f})"
             color = (0, 255, 0)
+            access = "ACCESO PERMITIDO"
         else:
             label = f"DESCONOCIDO ({mejor_distancia:.3f})"
             color = (0, 0, 255)
+            access = "ACCESO DENEGADO"
 
         # guardar para smoothing
         last_label = label
         last_color = color
+        last_access = access
 
-        # dibujar
+    # ==========================
+    #    DIBUJAR EN PANTALLA
+    # ==========================
+
+    if last_box is not None and last_label is not None:
+        x1, y1, x2, y2 = last_box
         cv2.rectangle(frame, (x1, y1), (x2, y2), last_color, 2)
         cv2.putText(frame, last_label, (x1, y1 - 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, last_color, 2)
+
+        # Mensaje de acceso
+        cv2.putText(frame, last_access, (20, 50),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.2, last_color, 3)
 
     cv2.imshow("Reconocimiento Facial", frame)
 
