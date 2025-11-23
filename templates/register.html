@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Usuario - Reconocimiento Facial</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            max-width: 900px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .form-section {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        #video-feed {
+            width: 100%;
+            display: block;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .video-overlay.hidden {
+            display: none;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-weight: 500;
+            text-align: center;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: left;
+            width: 100%;
+            max-width: 640px;
+        }
+
+        .instructions h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        .link-back {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .link-back a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link-back a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>➕ Registrar Nuevo Usuario</h1>
+            <p>Captura facial para registro en el sistema</p>
+        </div>
+
+        <div class="content">
+            <div class="instructions">
+                <h3>📋 Instrucciones de Registro</h3>
+                <ul>
+                    <li>Ingresa tu nombre de usuario</li>
+                    <li>Colócate frente a la cámara con buena iluminación</li>
+                    <li>Asegúrate de que tu rostro esté visible y centrado</li>
+                    <li>Mantén el rostro quieto frente a la cámara</li>
+                    <li>Haz clic en "Capturar y Registrar Rostro"</li>
+                </ul>
+            </div>
+
+            <div class="form-section">
+                <div class="form-group">
+                    <label for="username">👤 Nombre de Usuario:</label>
+                    <input type="text" id="username" placeholder="Ingresa el nombre del usuario" required>
+                </div>
+            </div>
+
+            <div class="video-container">
+                <img id="video-feed" src="" alt="Video en vivo">
+                <div class="video-overlay" id="video-overlay">
+                    Iniciando cámara...
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-primary" id="register-btn" onclick="registerUser()" disabled>
+                    Capturar y Registrar Rostro
+                </button>
+                <button class="btn btn-secondary" onclick="goToLogin()">
+                    Volver al Login
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 10px; color: #667eea; font-weight: bold;">Procesando registro...</p>
+            </div>
+
+            <div class="message" id="message"></div>
+
+            <div class="link-back">
+                <a href="/login">← Volver a la página de inicio de sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cameraReady = false;
+
+        // Verificar disponibilidad de cámara
+        async function checkCamera() {
+            try {
+                const response = await fetch('/check_camera');
+                const data = await response.json();
+                
+                if (data.available) {
+                    startVideoFeed();
+                } else {
+                    showMessage('No se pudo acceder a la cámara. Por favor, verifica los permisos.', 'error');
+                }
+            } catch (error) {
+                console.error('Error al verificar cámara:', error);
+                showMessage('Error al conectar con el servidor.', 'error');
+            }
+        }
+
+        // Iniciar feed de video
+        function startVideoFeed() {
+            const videoFeed = document.getElementById('video-feed');
+            const overlay = document.getElementById('video-overlay');
+            const registerBtn = document.getElementById('register-btn');
+
+            videoFeed.src = '/video_feed';
+            
+            videoFeed.onload = function() {
+                overlay.classList.add('hidden');
+                registerBtn.disabled = false;
+                cameraReady = true;
+            };
+
+            // Si la imagen tarda en cargar, mostrar mensaje
+            setTimeout(() => {
+                if (!cameraReady) {
+                    overlay.textContent = 'Esperando cámara... Esto puede tomar unos segundos';
+                }
+            }, 2000);
+        }
+
+        // Función de registro
+        async function registerUser() {
+            const username = document.getElementById('username').value.trim();
+
+            if (!username) {
+                showMessage('Por favor, ingresa un nombre de usuario.', 'error');
+                return;
+            }
+
+            if (!cameraReady) {
+                showMessage('La cámara aún no está lista. Por favor espera.', 'info');
+                return;
+            }
+
+            const registerBtn = document.getElementById('register-btn');
+            const loading = document.getElementById('loading');
+            const message = document.getElementById('message');
+
+            registerBtn.disabled = true;
+            loading.style.display = 'block';
+            message.style.display = 'none';
+
+            try {
+                const response = await fetch('/register_user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    // Limpiar formulario
+                    document.getElementById('username').value = '';
+                    
+                    // Opcional: redirigir después de 2 segundos
+                    setTimeout(() => {
+                        if (confirm('¿Deseas ir a la página de login?')) {
+                            window.location.href = '/login';
+                        } else {
+                            registerBtn.disabled = false;
+                        }
+                    }, 2000);
+                } else {
+                    showMessage(data.message, 'error');
+                    registerBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error al procesar el registro. Por favor, intenta de nuevo.', 'error');
+                registerBtn.disabled = false;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Mostrar mensajes
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = `message ${type}`;
+            message.style.display = 'block';
+        }
+
+        // Volver al login
+        function goToLogin() {
+            window.location.href = '/login';
+        }
+
+        // Permitir registro con Enter
+        document.getElementById('username').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && cameraReady) {
+                registerUser();
+            }
+        });
+
+        // Iniciar cuando carga la página
+        window.onload = function() {
+            checkCamera();
+        };
+    </script>
+</body>
+</html>

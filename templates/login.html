@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Reconocimiento Facial</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            max-width: 900px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        #video-feed {
+            width: 100%;
+            display: block;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .video-overlay.hidden {
+            display: none;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-weight: 500;
+            text-align: center;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: left;
+            width: 100%;
+            max-width: 640px;
+        }
+
+        .instructions h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Sistema de Acceso</h1>
+            <p>Autenticación mediante Reconocimiento Facial</p>
+        </div>
+
+        <div class="content">
+            <div class="instructions">
+                <h3>📋 Instrucciones</h3>
+                <ul>
+                    <li>Colócate frente a la cámara</li>
+                    <li>Asegúrate de tener buena iluminación</li>
+                    <li>Mantén tu rostro visible y centrado</li>
+                    <li>Haz clic en "Autenticar" para iniciar sesión</li>
+                </ul>
+            </div>
+
+            <div class="video-container">
+                <img id="video-feed" src="" alt="Video en vivo">
+                <div class="video-overlay" id="video-overlay">
+                    Iniciando cámara...
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-primary" id="auth-btn" onclick="authenticate()" disabled>
+                    Autenticar con Rostro
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 10px; color: #667eea; font-weight: bold;">Procesando...</p>
+            </div>
+
+            <div class="message" id="message"></div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <a href="/register" style="color: #667eea; text-decoration: none; font-weight: 600;">
+                    ¿Nuevo usuario? Regístrate aquí →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cameraReady = false;
+
+        // Verificar disponibilidad de cámara
+        async function checkCamera() {
+            try {
+                const response = await fetch('/check_camera');
+                const data = await response.json();
+                
+                if (data.available) {
+                    startVideoFeed();
+                } else {
+                    showMessage('No se pudo acceder a la cámara. Por favor, verifica los permisos.', 'error');
+                }
+            } catch (error) {
+                console.error('Error al verificar cámara:', error);
+                showMessage('Error al conectar con el servidor.', 'error');
+            }
+        }
+
+        // Iniciar feed de video
+        function startVideoFeed() {
+            const videoFeed = document.getElementById('video-feed');
+            const overlay = document.getElementById('video-overlay');
+            const authBtn = document.getElementById('auth-btn');
+
+            videoFeed.src = '/video_feed';
+            
+            videoFeed.onload = function() {
+                overlay.classList.add('hidden');
+                authBtn.disabled = false;
+                cameraReady = true;
+            };
+
+            // Si la imagen tarda en cargar, mostrar mensaje
+            setTimeout(() => {
+                if (!cameraReady) {
+                    overlay.textContent = 'Esperando cámara... Esto puede tomar unos segundos';
+                }
+            }, 2000);
+        }
+
+        // Función de autenticación
+        async function authenticate() {
+            if (!cameraReady) {
+                showMessage('La cámara aún no está lista. Por favor espera.', 'info');
+                return;
+            }
+
+            const authBtn = document.getElementById('auth-btn');
+            const loading = document.getElementById('loading');
+            const message = document.getElementById('message');
+
+            authBtn.disabled = true;
+            loading.style.display = 'block';
+            message.style.display = 'none';
+
+            try {
+                const response = await fetch('/authenticate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1500);
+                } else {
+                    showMessage(data.message, 'error');
+                    authBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error al procesar la autenticación. Por favor, intenta de nuevo.', 'error');
+                authBtn.disabled = false;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Mostrar mensajes
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = `message ${type}`;
+            message.style.display = 'block';
+        }
+
+        // Iniciar cuando carga la página
+        window.onload = function() {
+            checkCamera();
+        };
+    </script>
+</body>
+</html>

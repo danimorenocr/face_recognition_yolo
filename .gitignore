@@ -51,10 +51,12 @@ base_rostros/
 !base_rostros/.gitkeep
 
 # Modelos ONNX (son muy grandes para git)
+models/*.onnx
 modelo_det_face/*.onnx
 modelo_arcface/*.onnx
 
 # Mantener las carpetas pero no los modelos
+!models/.gitkeep
 !modelo_det_face/.gitkeep
 !modelo_arcface/.gitkeep
 

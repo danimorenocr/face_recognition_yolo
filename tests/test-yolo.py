@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 
-YOLO_MODEL = "modelo_det_face/model.onnx"
+YOLO_MODEL = "../modelo_det_face/model.onnx"
 
 session = ort.InferenceSession(YOLO_MODEL, providers=["CPUExecutionProvider"])
 input_name = session.get_inputs()[0].name
