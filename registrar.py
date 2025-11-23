@@ -107,11 +107,12 @@ while True:
         face_pre = preprocess_arcface(face)
         embedding = session_arc.run(None, {input_name_arc: face_pre})[0][0]
 
-        # Guardar embedding
-        path = f"base_rostros/{nombre}.npy"
-        np.save(path, embedding)
+        # Guardar embedding en base de datos
+        db = SessionLocal()
+        guardar_usuario(db, nombre, embedding)
+        db.close()
 
-        print(f"✔ Rostro registrado correctamente: {path}")
+        print(f"✔ Rostro registrado correctamente: {nombre}")
 
         cap.release()
         cv2.destroyAllWindows()

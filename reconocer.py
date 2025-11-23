@@ -4,13 +4,16 @@ import onnxruntime as ort
 import os
 from utils import preprocess_arcface
 from session_options import get_optimized_session
+from core.database import SessionLocal
+from services.face_recognizer import obtener_usuarios
 
 # ==========================
 #       MODELOS
 # ==========================
 
-YOLO_MODEL = "modelo_det_face/model.onnx"
-ARC_MODEL  = "modelo_arcface/arcface_r100.onnx"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+YOLO_MODEL = os.path.join(BASE_DIR, "models", "model.onnx")
+ARC_MODEL  = os.path.join(BASE_DIR, "models", "arcface_r100.onnx")
 
 session_yolo = get_optimized_session(YOLO_MODEL)
 input_name_yolo = session_yolo.get_inputs()[0].name
@@ -23,15 +26,14 @@ input_name_arc = session_arc.get_inputs()[0].name
 # ==========================
 
 def cargar_base():
-    base = {}
-    for archivo in os.listdir("base_rostros"):
-        if archivo.endswith(".npy"):
-            nombre = archivo.replace(".npy", "")
-            base[nombre] = np.load(f"base_rostros/{archivo}")
-    return base
+    db = SessionLocal()
+    base_usuarios = obtener_usuarios(db)
+    db.close()
+    return base_usuarios   # ❗ IMPORTANTE: retornar
 
 base_usuarios = cargar_base()
 print(f"✔ Usuarios cargados: {list(base_usuarios.keys())}")
+
 
 def distancia_coseno(a, b):
     dot = np.dot(a, b)
