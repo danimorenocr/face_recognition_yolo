@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - Reconocimiento Facial</title>
+    <title>Registrar Usuario - Reconocimiento Facial</title>
     <style>
         * {
             margin: 0;
@@ -56,6 +56,54 @@
             align-items: center;
         }
 
+        .form-section {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+
         .video-container {
             position: relative;
             width: 100%;
@@ -93,7 +141,7 @@
         .controls {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
             width: 100%;
             max-width: 400px;
         }
@@ -115,12 +163,22 @@
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
         }
 
-        .btn-primary:disabled {
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
             background: #ccc;
             cursor: not-allowed;
             transform: none;
@@ -194,6 +252,21 @@
             line-height: 1.8;
         }
 
+        .link-back {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .link-back a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link-back a:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
@@ -212,19 +285,27 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔐 Sistema de Acceso</h1>
-            <p>Autenticación mediante Reconocimiento Facial</p>
+            <h1>➕ Registrar Nuevo Usuario</h1>
+            <p>Captura facial para registro en el sistema</p>
         </div>
 
         <div class="content">
             <div class="instructions">
-                <h3>📋 Instrucciones</h3>
+                <h3>📋 Instrucciones de Registro</h3>
                 <ul>
-                    <li>Colócate frente a la cámara</li>
-                    <li>Asegúrate de tener buena iluminación</li>
-                    <li>Mantén tu rostro visible y centrado</li>
-                    <li>Haz clic en "Autenticar" para iniciar sesión</li>
+                    <li>Ingresa tu nombre de usuario</li>
+                    <li>Colócate frente a la cámara con buena iluminación</li>
+                    <li>Asegúrate de que tu rostro esté visible y centrado</li>
+                    <li>Mantén el rostro quieto frente a la cámara</li>
+                    <li>Haz clic en "Capturar y Registrar Rostro"</li>
                 </ul>
+            </div>
+
+            <div class="form-section">
+                <div class="form-group">
+                    <label for="username">👤 Nombre de Usuario:</label>
+                    <input type="text" id="username" placeholder="Ingresa el nombre del usuario" required>
+                </div>
             </div>
 
             <div class="video-container">
@@ -235,22 +316,23 @@
             </div>
 
             <div class="controls">
-                <button class="btn btn-primary" id="auth-btn" onclick="authenticate()" disabled>
-                    Autenticar con Rostro
+                <button class="btn btn-primary" id="register-btn" onclick="registerUser()" disabled>
+                    Capturar y Registrar Rostro
+                </button>
+                <button class="btn btn-secondary" onclick="goToLogin()">
+                    Volver al Login
                 </button>
             </div>
 
             <div class="loading" id="loading">
                 <div class="spinner"></div>
-                <p style="margin-top: 10px; color: #667eea; font-weight: bold;">Procesando...</p>
+                <p style="margin-top: 10px; color: #667eea; font-weight: bold;">Procesando registro...</p>
             </div>
 
             <div class="message" id="message"></div>
-            
-            <div style="margin-top: 20px; text-align: center;">
-                <a href="/register" style="color: #667eea; text-decoration: none; font-weight: 600;">
-                    ¿Nuevo usuario? Regístrate aquí →
-                </a>
+
+            <div class="link-back">
+                <a href="/login">← Volver a la página de inicio de sesión</a>
             </div>
         </div>
     </div>
@@ -279,13 +361,13 @@
         function startVideoFeed() {
             const videoFeed = document.getElementById('video-feed');
             const overlay = document.getElementById('video-overlay');
-            const authBtn = document.getElementById('auth-btn');
+            const registerBtn = document.getElementById('register-btn');
 
             videoFeed.src = '/video_feed';
             
             videoFeed.onload = function() {
                 overlay.classList.add('hidden');
-                authBtn.disabled = false;
+                registerBtn.disabled = false;
                 cameraReady = true;
             };
 
@@ -297,44 +379,62 @@
             }, 2000);
         }
 
-        // Función de autenticación
-        async function authenticate() {
+        // Función de registro
+        async function registerUser() {
+            const username = document.getElementById('username').value.trim();
+
+            if (!username) {
+                showMessage('Por favor, ingresa un nombre de usuario.', 'error');
+                return;
+            }
+
             if (!cameraReady) {
                 showMessage('La cámara aún no está lista. Por favor espera.', 'info');
                 return;
             }
 
-            const authBtn = document.getElementById('auth-btn');
+            const registerBtn = document.getElementById('register-btn');
             const loading = document.getElementById('loading');
             const message = document.getElementById('message');
 
-            authBtn.disabled = true;
+            registerBtn.disabled = true;
             loading.style.display = 'block';
             message.style.display = 'none';
 
             try {
-                const response = await fetch('/authenticate', {
+                const response = await fetch('/register_user', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    body: JSON.stringify({
+                        username: username
+                    })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
                     showMessage(data.message, 'success');
+                    // Limpiar formulario
+                    document.getElementById('username').value = '';
+                    
+                    // Opcional: redirigir después de 2 segundos
                     setTimeout(() => {
-                        window.location.href = '/dashboard';
-                    }, 1500);
+                        if (confirm('¿Deseas ir a la página de login?')) {
+                            window.location.href = '/login';
+                        } else {
+                            registerBtn.disabled = false;
+                        }
+                    }, 2000);
                 } else {
                     showMessage(data.message, 'error');
-                    authBtn.disabled = false;
+                    registerBtn.disabled = false;
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showMessage('Error al procesar la autenticación. Por favor, intenta de nuevo.', 'error');
-                authBtn.disabled = false;
+                showMessage('Error al procesar el registro. Por favor, intenta de nuevo.', 'error');
+                registerBtn.disabled = false;
             } finally {
                 loading.style.display = 'none';
             }
@@ -347,6 +447,18 @@
             message.className = `message ${type}`;
             message.style.display = 'block';
         }
+
+        // Volver al login
+        function goToLogin() {
+            window.location.href = '/login';
+        }
+
+        // Permitir registro con Enter
+        document.getElementById('username').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && cameraReady) {
+                registerUser();
+            }
+        });
 
         // Iniciar cuando carga la página
         window.onload = function() {
